@@ -1,0 +1,55 @@
+version: '3.2'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    ports:
+     - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+     - ./mysql:/var/lib/mysql
+    networks:
+      - mysql
+    environment:
+      #MYSQL_USER: 'admin'
+      #MYSQL_PASSWORD: 'admin'
+      MYSQL_ROOT_PASSWORD: 123456
+      #MYSQL_DATABASE: default_schema
+
+  phpmyadmin:
+    depends_on:
+      - mysql
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    #ports:
+    #  - '80:80'
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      #PMA_USER: 'admin'
+      #PMA_PASSWORD: '123456'
+      #PMA_ABSOLUTE_URI: 'https://phpmyadmin.gob.ve/'
+    expose:
+      - "80"
+    networks:
+      - mysql
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.phpmyadmin-front.rule=Host(`phpmyadmin.gob.ve`)"
+      - "traefik.http.routers.phpmyadmin-front.entrypoints=web"
+      - "traefik.http.routers.phpmyadmin-front-secure.rule=Host(`phpmyadmin.gob.ve`)"
+      - "traefik.http.routers.phpmyadmin-front-secure.entrypoints=web-secured"
+      - "traefik.http.routers.phpmyadmin-front-secure.tls.certresolver=certificadosssl"
+      - "traefik.http.routers.phpmyadmin-front.middlewares=redireccionhttp@docker" 
+
+networks:
+  mysql:
+    external: true
+  web:
+    external: true
